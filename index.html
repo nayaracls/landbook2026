@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Landbook 2026 - Land Grow</title>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --brand-color: #c6fe1f;
+            --pdf-width: 210mm;
+            --pdf-height: 297mm;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #000000;
+            color: #ffffff;
+            margin: 0;
+            padding: 0;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+
+            body,
+            html {
+                background: #000000 !important;
+                color: white !important;
+            }
+
+            @page {
+                size: A4;
+                margin: 0;
+            }
+        }
+
+        #landbook-pdf-content {
+            background-color: #000000 !important;
+            width: 794px;
+            min-height: 1123px;
+            /* Garante altura mínima de uma página A4 */
+            margin: 0 auto;
+            position: relative;
+            box-sizing: border-box;
+            color: white;
+            overflow: visible;
+            padding: 20mm;
+            /* Margem visual interna segura */
+        }
+
+        .pdf-content-wrapper {
+            background-color: #000000 !important;
+            width: 100%;
+            color: white;
+            box-sizing: border-box;
+        }
+
+        .page-break {
+            page-break-before: always;
+            break-before: page;
+            display: block;
+            height: 1px;
+            /* Altura mínima para o renderizador detectar o bloco */
+            margin: 2rem 0;
+            /* Espaço visual na tela antes da quebra */
+            clear: both;
+        }
+
+        .cover-page {
+            height: 970px;
+            max-height: 970px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            page-break-after: always;
+            border-bottom: 1px solid #333;
+            margin-bottom: 0;
+            padding-bottom: 2rem;
+            overflow: hidden;
+        }
+
+        .code-block-container {
+            margin: 1rem 0;
+            page-break-inside: avoid;
+            break-inside: avoid;
+            background: #111;
+            border-radius: 8px;
+            border: 1px solid #333;
+        }
+
+        .step-indicator {
+            width: 32px;
+            height: 32px;
+            background: var(--brand-color);
+            color: black;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 14px;
+            margin-bottom: 1rem;
+        }
+
+        .h1-title {
+            font-size: 3.5rem;
+            font-weight: 900;
+            line-height: 0.9;
+            text-transform: uppercase;
+            letter-spacing: -0.05em;
+            margin-bottom: 1rem;
+            color: white;
+        }
+
+        .h2-title {
+            font-size: 1.5rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            color: var(--brand-color);
+        }
+
+        .body-text {
+            font-size: 14px;
+            line-height: 1.6;
+            color: #d1d5db;
+            margin-bottom: 1.5rem;
+        }
+
+        .prompt-block {
+            background: #111;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 12px;
+        }
+
+        .gradient-text {
+            color: var(--brand-color);
+        }
+
+        #landbook-pdf-content::-webkit-scrollbar {
+            display: none;
+        }
+
+        .btn-primary {
+            background-color: var(--brand-color);
+            color: black;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary:hover {
+            background-color: white;
+            transform: translateY(-2px);
+        }
+
+        .glass {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fadeIn {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+</body>
+
+</html>
