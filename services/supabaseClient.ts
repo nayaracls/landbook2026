@@ -8,33 +8,40 @@ const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
 export const saveLead = async (data: BusinessData) => {
-    // Se não estiver configurado, apenas loga e retorna
-    if (!supabaseUrl || !supabaseKey) {
-        console.warn('Supabase não configurado. Dados não serão salvos.');
-        return;
-    }
+    // TEMPORARIAMENTE DESABILITADO - Aguardando configuração de CORS no EasyPanel
+    // Por enquanto, salva no localStorage do navegador
 
     try {
-        const { error } = await supabase
-            .from('leads')
-            .insert([
-                {
-                    user_name: data.userName,
-                    company_name: data.companyName,
-                    email: data.email,
-                    whatsapp: data.whatsapp,
-                    profile: typeof data.profile === 'string' ? data.profile : 'Desconhecido',
-                    answers: data.answers, // Supabase aceita JSONB
-                    created_at: new Date().toISOString()
-                }
-            ]);
-
-        if (error) {
-            console.error('Erro ao salvar lead no Supabase:', error);
-        } else {
-            console.log('Lead salvo com sucesso!');
-        }
+        const leads = JSON.parse(localStorage.getItem('landbook_leads') || '[]');
+        leads.push({
+            ...data,
+            saved_at: new Date().toISOString()
+        });
+        localStorage.setItem('landbook_leads', JSON.stringify(leads));
+        console.log('✅ Lead salvo localmente no navegador');
     } catch (err) {
-        console.error('Erro inesperado ao salvar lead:', err);
+        // Silent fail
     }
+
+    // DESCOMENTE O CÓDIGO ABAIXO QUANDO CONFIGURAR CORS NO EASYPANEL:
+    // --------------------------------------------------------------------
+    // if (!supabaseUrl || !supabaseKey) return;
+    //
+    // try {
+    //   const { error } = await supabase
+    //     .from('leads')
+    //     .insert([{
+    //       user_name: data.userName,
+    //       company_name: data.companyName,
+    //       email: data.email,
+    //       whatsapp: data.whatsapp,
+    //       profile: typeof data.profile === 'string' ? data.profile : 'Desconhecido',
+    //       answers: data.answers,
+    //       created_at: new Date().toISOString()
+    //     }]);
+    //   if (error) throw error;
+    //   console.log('Lead salvo no Supabase!');
+    // } catch (err) {
+    //   console.error('Erro Supabase:', err);
+    // }
 };
