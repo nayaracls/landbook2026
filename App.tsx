@@ -3,6 +3,7 @@ import React, { useState, useCallback } from 'react';
 import { AppStage, BusinessData, QuizAnswer, ProfileType } from './types';
 import { QUIZ_QUESTIONS } from './constants';
 import { generatePersonalizedLandbook } from './services/geminiService';
+import { saveLead } from './services/supabaseClient';
 import WelcomeView from './components/WelcomeView';
 import QuizView from './components/QuizView';
 import DiagnosisView from './components/DiagnosisView';
@@ -32,13 +33,13 @@ const App: React.FC = () => {
 
     // Prioridade 1: Financeiro/Caixa (Cego Financeiro)
     if (finClarity === 'C' || cashReserve === 'A') return ProfileType.CEGO_FINANCEIRO;
-    
+
     // Prioridade 2: Dono Gargalo / Centralizador
     if (docProcess === 'C' && (teamSize === 'B' || teamSize === 'C')) return ProfileType.CENTRALIZADOR;
-    
+
     // Prioridade 3: Falta de Planejamento (Reativo/Bombeiro)
     if (planning === 'C') return ProfileType.REATIVO;
-    
+
     // Prioridade 4: Estagnação (Passivo Comercial)
     if (growthTrend === 'B' || growthTrend === 'C') return ProfileType.PASSIVO_COMERCIAL;
 
@@ -54,13 +55,13 @@ const App: React.FC = () => {
 
   const handleAnswer = (answerText: string, optionKey?: string) => {
     const question = QUIZ_QUESTIONS[currentQuestionIndex];
-    const newAnswers = [...businessData.answers, { 
-      questionId: question.id, 
-      answer: answerText, 
+    const newAnswers = [...businessData.answers, {
+      questionId: question.id,
+      answer: answerText,
       optionKey,
       category: question.category
     }];
-    
+
     let newData = { ...businessData, answers: newAnswers };
     if (question.id === 1) {
       newData.companyName = answerText;
@@ -72,7 +73,10 @@ const App: React.FC = () => {
       setCurrentQuestionIndex(prev => prev + 1);
     } else {
       const finalProfile = calculateProfile(newAnswers);
-      setBusinessData({ ...newData, profile: finalProfile });
+      const finalData = { ...newData, profile: finalProfile };
+
+      setBusinessData(finalData);
+      saveLead(finalData);
       setStage(AppStage.DIAGNOSIS);
     }
   };
@@ -103,17 +107,17 @@ const App: React.FC = () => {
         <main className="w-full">
           {stage === AppStage.WELCOME && <WelcomeView onStart={handleStart} />}
           {stage === AppStage.QUIZ && (
-            <QuizView 
-              question={QUIZ_QUESTIONS[currentQuestionIndex]} 
+            <QuizView
+              question={QUIZ_QUESTIONS[currentQuestionIndex]}
               currentIndex={currentQuestionIndex}
               total={QUIZ_QUESTIONS.length}
-              onAnswer={handleAnswer} 
+              onAnswer={handleAnswer}
             />
           )}
           {stage === AppStage.DIAGNOSIS && (
-            <DiagnosisView 
-              data={businessData} 
-              onNext={handleGenerateBook} 
+            <DiagnosisView
+              data={businessData}
+              onNext={handleGenerateBook}
               isLoading={isLoading}
             />
           )}
