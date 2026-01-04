@@ -1,0 +1,16 @@
+# Build outputs
+dist
+node_modules
+
+# Environment files  
+.env
+.env.local
+.env.development
+.env.production
+
+# OS files
+.DS_Store
+*.log
+
+# Vercel
+.vercel

@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Landbook 2026 - Land Grow</title>
+
+    <!-- Removido html2pdf.js antigo - agora usando jsPDF + html2canvas diretamente -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --brand-color: #c6fe1f;
+            --pdf-width: 210mm;
+            --pdf-height: 297mm;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #000000;
+            color: #ffffff;
+            margin: 0;
+            padding: 0;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+
+        /* Garante que botões de ação sejam sempre visíveis na tela */
+        button[onclick], .download-button {
+            display: flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            
+            /* Botão de download não deve aparecer no PDF */
+            .download-button, button[onclick] {
+                display: none !important;
+            }
+
+            body,
+            html {
+                background: #000000 !important;
+                color: white !important;
+            }
+
+            @page {
+                size: A4;
+                margin: 0;
+            }
+        }
+
+        /* Estilos para resultado-completo (nova estrutura) */
+        #resultado-completo {
+            background-color: #000000 !important;
+            width: 794px !important;
+            max-width: 794px !important;
+            min-height: 1123px;
+            margin: 0 auto;
+            position: relative;
+            box-sizing: border-box;
+            color: #ffffff !important;
+            overflow: visible;
+            padding: 40px 30px;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        /* Centraliza elementos dentro */
+        #resultado-completo > * {
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+        
+        #resultado-completo [style*="text-align: center"],
+        #resultado-completo .text-center {
+            text-align: center !important;
+        }
+        
+        #resultado-completo p,
+        #resultado-completo div:not(.text-center):not([style*="text-align: center"]),
+        #resultado-completo li,
+        #resultado-completo span {
+            text-align: left;
+            word-break: break-word;
+            overflow-wrap: break-word;
+            hyphens: auto;
+        }
+        
+        #landbook-pdf-content {
+            background-color: #000000 !important;
+            width: 794px !important;
+            max-width: 794px !important;
+            min-height: 1123px;
+            margin: 0 auto;
+            position: relative;
+            box-sizing: border-box;
+            color: #ffffff !important;
+            overflow: visible;
+            padding: 20mm 15mm;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            font-family: 'Inter', sans-serif;
+            text-align: center;
+        }
+        
+        /* Centraliza o conteúdo */
+        #landbook-pdf-content > * {
+            text-align: left;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* FORÇA cores em TODOS os elementos - para o PDF */
+        #resultado-completo p,
+        #resultado-completo div:not(.code-block-container):not(.methodology-card),
+        #resultado-completo li,
+        #resultado-completo span:not(.code-block-container span):not(pre span) {
+            color: #d1d5db !important;
+        }
+
+        #resultado-completo h1,
+        #resultado-completo h2,
+        #resultado-completo h3 {
+            color: #ffffff !important;
+        }
+
+        #resultado-completo .text-white,
+        #resultado-completo .h1-title,
+        #resultado-completo .h2-title {
+            color: #ffffff !important;
+        }
+
+        #resultado-completo .text-zinc-300,
+        #resultado-completo .body-text {
+            color: #d1d5db !important;
+        }
+        
+        #landbook-pdf-content p,
+        #landbook-pdf-content div:not(.code-block-container):not(.methodology-card),
+        #landbook-pdf-content li,
+        #landbook-pdf-content span:not(.code-block-container span):not(pre span) {
+            color: #d1d5db !important;
+        }
+
+        #landbook-pdf-content h1,
+        #landbook-pdf-content h2,
+        #landbook-pdf-content h3 {
+            color: #ffffff !important;
+        }
+
+        #landbook-pdf-content .text-white,
+        #landbook-pdf-content .h1-title,
+        #landbook-pdf-content .h2-title {
+            color: #ffffff !important;
+        }
+
+        #landbook-pdf-content .text-zinc-300,
+        #landbook-pdf-content .body-text {
+            color: #d1d5db !important;
+        }
+
+        /* Garante que o fundo seja sempre preto */
+        #resultado-completo,
+        #landbook-pdf-content,
+        .pdf-content-wrapper,
+        .cover-page {
+            background-color: #000000 !important;
+        }
+
+        /* Remove background de elementos filhos mas mantém o container preto */
+        #landbook-pdf-content > * {
+            background-color: transparent !important;
+        }
+
+        .pdf-content-wrapper {
+            background-color: #000000 !important;
+            width: 100%;
+            color: white;
+            box-sizing: border-box;
+            padding: 0;
+            position: relative;
+        }
+
+        .page-break {
+            page-break-before: always;
+            break-before: page;
+            display: block;
+            height: 0;
+            margin: 0;
+            padding: 0;
+            clear: both;
+        }
+        
+        /* Previne quebra dentro de elementos críticos */
+        #resultado-completo h1,
+        #resultado-completo h2,
+        #resultado-completo h3 {
+            page-break-after: avoid;
+            break-after: avoid;
+            orphans: 3;
+            widows: 3;
+        }
+        
+        #resultado-completo p {
+            orphans: 3;
+            widows: 3;
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        .cover-page {
+            min-height: calc(100vh - 60mm);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            page-break-after: always;
+            break-after: page;
+            padding: 0;
+            margin: 0;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+
+        .code-block-container {
+            margin: 1rem 0;
+            page-break-inside: avoid;
+            break-inside: avoid;
+            background: #111 !important;
+            border-radius: 8px;
+            border: 1px solid #333;
+            padding: 1rem;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+
+        .code-block-container pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            max-width: 100%;
+            font-family: 'Courier New', monospace;
+        }
+
+        /* Cards de metodologias gamificadas */
+        .methodology-card {
+            background: linear-gradient(135deg, rgba(198, 254, 31, 0.05) 0%, rgba(198, 254, 31, 0.02) 100%);
+            border: 1px solid rgba(198, 254, 31, 0.2);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            page-break-inside: avoid;
+            break-inside: avoid;
+            position: relative;
+        }
+
+        .methodology-card::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: var(--brand-color);
+            border-radius: 12px 0 0 12px;
+        }
+
+        /* Melhorias de quebra de página e texto */
+        h1, h2, h3 {
+            page-break-after: avoid;
+            break-after: avoid;
+            orphans: 3;
+            widows: 3;
+            max-width: 100%;
+            word-wrap: normal;
+            overflow-wrap: normal;
+            word-break: normal;
+            hyphens: none;
+        }
+
+        p, li, span, div {
+            orphans: 2;
+            widows: 2;
+            max-width: 100%;
+            word-wrap: normal;
+            overflow-wrap: normal;
+            word-break: normal;
+            hyphens: none;
+            text-align: left;
+        }
+
+        /* Evita quebra de palavras no meio - quebra apenas em espaços */
+        #landbook-pdf-content p,
+        #landbook-pdf-content li,
+        #landbook-pdf-content div:not(.code-block-container):not(.methodology-card),
+        #landbook-pdf-content span:not(.code-block-container span):not(pre span):not(code span) {
+            word-break: normal !important;
+            overflow-wrap: break-word !important;
+            word-wrap: normal !important;
+            hyphens: none !important;
+            text-align: left !important;
+            white-space: normal !important;
+            line-height: 1.75 !important;
+        }
+
+        /* Títulos não quebram */
+        #landbook-pdf-content h1,
+        #landbook-pdf-content h2,
+        #landbook-pdf-content h3 {
+            word-break: normal !important;
+            overflow-wrap: normal !important;
+            hyphens: none !important;
+            white-space: normal !important;
+        }
+
+        /* Texto em blocos de código pode quebrar */
+        pre, code, .code-block-container pre,
+        .code-block-container code {
+            word-break: break-word !important;
+            overflow-wrap: break-word !important;
+            white-space: pre-wrap !important;
+        }
+
+        /* Garante que containers não forcem quebras */
+        #landbook-pdf-content .pdf-content-wrapper {
+            width: 100% !important;
+            max-width: 100% !important;
+            box-sizing: border-box;
+        }
+
+        .step-indicator {
+            width: 32px;
+            height: 32px;
+            background: var(--brand-color);
+            color: black;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 14px;
+            margin-bottom: 1rem;
+        }
+
+        .h1-title {
+            font-size: 3.5rem;
+            font-weight: 900;
+            line-height: 0.9;
+            text-transform: uppercase;
+            letter-spacing: -0.05em;
+            margin-bottom: 1rem;
+            color: white;
+        }
+
+        .h2-title {
+            font-size: 1.5rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            color: var(--brand-color);
+        }
+
+        .body-text {
+            font-size: 14px;
+            line-height: 1.75;
+            color: #d1d5db !important;
+            margin-bottom: 2rem;
+            margin-top: 0.5rem;
+            word-wrap: normal;
+            overflow-wrap: break-word;
+            word-break: normal;
+            hyphens: none;
+            orphans: 3;
+            widows: 3;
+            max-width: 100%;
+            text-align: left;
+            white-space: normal;
+            letter-spacing: 0.01em;
+        }
+
+        /* Mais espaço entre parágrafos */
+        #landbook-pdf-content p + p {
+            margin-top: 1.5rem;
+        }
+
+        /* Espaço entre seções */
+        #landbook-pdf-content h1,
+        #landbook-pdf-content h2,
+        #landbook-pdf-content h3 {
+            margin-top: 2.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Espaço entre itens de lista */
+        #landbook-pdf-content li {
+            margin-bottom: 0.75rem;
+        }
+
+        .prompt-block {
+            background: #111;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 12px;
+        }
+
+        .gradient-text {
+            color: var(--brand-color);
+        }
+
+        #landbook-pdf-content::-webkit-scrollbar {
+            display: none;
+        }
+
+        .btn-primary {
+            background-color: var(--brand-color);
+            color: black;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary:hover {
+            background-color: white;
+            transform: translateY(-2px);
+        }
+
+        .glass {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fadeIn {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+</body>
+
+</html>
