@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de Configuração Supabase</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #0a0a0a;
+            color: #fff;
+        }
+        .test-box {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .success {
+            border-color: #4ade80;
+            background: #1a3a2a;
+        }
+        .error {
+            border-color: #ef4444;
+            background: #3a1a1a;
+        }
+        .warning {
+            border-color: #fbbf24;
+            background: #3a2a1a;
+        }
+        button {
+            background: #c6fe1f;
+            color: #000;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #a8d91a;
+        }
+        pre {
+            background: #000;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+        .label {
+            color: #9ca3af;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+        .value {
+            color: #fff;
+            font-size: 16px;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Teste de Configuração Supabase</h1>
+    <p>Este arquivo ajuda a verificar se as variáveis de ambiente estão configuradas corretamente.</p>
+
+    <div class="test-box" id="env-test">
+        <h2>1. Verificar Variáveis de Ambiente</h2>
+        <button onclick="checkEnvVars()">Verificar Variáveis</button>
+        <div id="env-result"></div>
+    </div>
+
+    <div class="test-box" id="connection-test">
+        <h2>2. Testar Conexão com Supabase</h2>
+        <button onclick="testConnection()">Testar Conexão</button>
+        <div id="connection-result"></div>
+    </div>
+
+    <div class="test-box" id="insert-test">
+        <h2>3. Testar Inserção de Dados</h2>
+        <button onclick="testInsert()">Testar INSERT</button>
+        <div id="insert-result"></div>
+    </div>
+
+    <script type="module">
+        // Importar Supabase (simula o que acontece na aplicação)
+        window.checkEnvVars = function() {
+            const resultDiv = document.getElementById('env-result');
+            const url = import.meta.env?.VITE_SUPABASE_URL || window.VITE_SUPABASE_URL;
+            const key = import.meta.env?.VITE_SUPABASE_ANON_KEY || window.VITE_SUPABASE_ANON_KEY;
+
+            let html = '<div class="label">VITE_SUPABASE_URL:</div>';
+            if (url) {
+                html += `<div class="value success" style="color: #4ade80;">${url}</div>`;
+            } else {
+                html += '<div class="value error" style="color: #ef4444;">❌ NÃO CONFIGURADO</div>';
+            }
+
+            html += '<div class="label" style="margin-top: 15px;">VITE_SUPABASE_ANON_KEY:</div>';
+            if (key) {
+                const keyPreview = key.substring(0, 30) + '...' + key.substring(key.length - 10);
+                html += `<div class="value success" style="color: #4ade80;">${keyPreview}</div>`;
+            } else {
+                html += '<div class="value error" style="color: #ef4444;">❌ NÃO CONFIGURADO</div>';
+            }
+
+            if (!url || !key) {
+                html += '<div style="margin-top: 15px; color: #fbbf24;">⚠️ Configure as variáveis no Vercel ou no arquivo .env</div>';
+            }
+
+            resultDiv.innerHTML = html;
+        };
+
+        window.testConnection = async function() {
+            const resultDiv = document.getElementById('connection-result');
+            resultDiv.innerHTML = '<div style="color: #9ca3af;">Testando conexão...</div>';
+
+            try {
+                const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
+                
+                const url = import.meta.env?.VITE_SUPABASE_URL || prompt('Cole a URL do Supabase:');
+                const key = import.meta.env?.VITE_SUPABASE_ANON_KEY || prompt('Cole a chave anon:');
+
+                if (!url || !key) {
+                    resultDiv.innerHTML = '<div class="value error">❌ URL ou chave não fornecidas</div>';
+                    return;
+                }
+
+                const supabase = createClient(url, key);
+                
+                // Testa uma query simples
+                const { data, error } = await supabase
+                    .from('leads')
+                    .select('count', { count: 'exact', head: true });
+
+                if (error) {
+                    resultDiv.innerHTML = `
+                        <div class="value error">❌ Erro de Conexão:</div>
+                        <pre>${JSON.stringify(error, null, 2)}</pre>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="value success">✅ Conexão bem-sucedida!</div>
+                        <div style="margin-top: 10px; color: #9ca3af;">Total de leads na tabela: ${data || 0}</div>
+                    `;
+                }
+            } catch (err) {
+                resultDiv.innerHTML = `
+                    <div class="value error">❌ Erro:</div>
+                    <pre>${err.message}</pre>
+                `;
+            }
+        };
+
+        window.testInsert = async function() {
+            const resultDiv = document.getElementById('insert-result');
+            resultDiv.innerHTML = '<div style="color: #9ca3af;">Testando inserção...</div>';
+
+            try {
+                const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
+                
+                const url = import.meta.env?.VITE_SUPABASE_URL || prompt('Cole a URL do Supabase:');
+                const key = import.meta.env?.VITE_SUPABASE_ANON_KEY || prompt('Cole a chave anon:');
+
+                if (!url || !key) {
+                    resultDiv.innerHTML = '<div class="value error">❌ URL ou chave não fornecidas</div>';
+                    return;
+                }
+
+                const supabase = createClient(url, key);
+                
+                // Tenta inserir um registro de teste
+                const testData = {
+                    user_name: 'Teste Config',
+                    company_name: 'Teste Company',
+                    email: 'teste@teste.com',
+                    whatsapp: '11999999999',
+                    profile: 'TESTE',
+                    answers: [{ test: 'dados' }],
+                    created_at: new Date().toISOString()
+                };
+
+                const { data, error } = await supabase
+                    .from('leads')
+                    .insert([testData])
+                    .select();
+
+                if (error) {
+                    resultDiv.innerHTML = `
+                        <div class="value error">❌ Erro ao Inserir:</div>
+                        <pre>${JSON.stringify(error, null, 2)}</pre>
+                        <div style="margin-top: 15px; color: #fbbf24;">
+                            <strong>Possíveis causas:</strong><br>
+                            • Política RLS não permite inserção anônima<br>
+                            • Tabela não existe<br>
+                            • Colunas não correspondem<br>
+                            • Execute o SQL: <code>supabase_fix_401.sql</code>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="value success">✅ Inserção bem-sucedida!</div>
+                        <pre style="margin-top: 10px;">${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                }
+            } catch (err) {
+                resultDiv.innerHTML = `
+                    <div class="value error">❌ Erro:</div>
+                    <pre>${err.message}</pre>
+                `;
+            }
+        };
+
+        // Auto-executar verificação ao carregar
+        setTimeout(() => {
+            checkEnvVars();
+        }, 500);
+    </script>
+</body>
+</html>
+

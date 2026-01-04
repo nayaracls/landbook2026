@@ -82,5 +82,3 @@ Ou usar o VS Code:
 1. Abra o VS Code no diretório do projeto
 2. Abra o terminal integrado (Ctrl + `)
 3. Execute os comandos acima
-
-
