@@ -72,7 +72,16 @@ export const generatePDF = async (elementId: string, filename: string): Promise<
       onclone: (clonedDoc) => {
         const clonedElement = clonedDoc.getElementById(elementId);
         if (clonedElement) {
+          // Remove elementos que não devem aparecer no PDF
           clonedElement.querySelectorAll('.no-print').forEach(el => el.remove());
+          
+          // Mostra o botão específico para PDF
+          clonedElement.querySelectorAll('.pdf-only-button').forEach(el => {
+            const htmlEl = el as HTMLElement;
+            htmlEl.style.setProperty('display', 'inline-block', 'important');
+            htmlEl.style.setProperty('visibility', 'visible', 'important');
+            htmlEl.style.setProperty('opacity', '1', 'important');
+          });
           
           // Mantém exatamente como está no navegador - apenas garante visibilidade
           // Não altera estilos para manter fidelidade visual
@@ -112,13 +121,70 @@ export const generatePDF = async (elementId: string, filename: string): Promise<
     // Converte altura de conteúdo em mm para pixels mantendo proporção do canvas
     const pageHeightInPixels = (contentHeight / contentWidth) * canvas.width;
     
-    // Margem de segurança de 4% para evitar cortes no meio de elementos
-    const safePageHeightPx = pageHeightInPixels * 0.96;
+    // Margem de segurança maior (8%) para evitar cortes no meio de elementos
+    // E espaço adicional para evitar cortes no final de linhas/parágrafos
+    const safePageHeightPx = pageHeightInPixels * 0.92;
     
     // Primeira página - preenche fundo preto completo
     pdf.rect(0, 0, pdfWidth, pdfHeight, 'F');
     
-    // Divide o canvas em páginas com margem de segurança maior
+    // Função auxiliar simplificada para detectar espaço vazio (permite quebra mais segura)
+    const findSafeBreakPoint = (startY: number, maxHeight: number): number => {
+      // Analisa apenas a última porção da página (últimos 80 pixels ou 15% da altura)
+      const scanZone = Math.min(80, maxHeight * 0.15);
+      const scanStart = startY + maxHeight - scanZone;
+      
+      // Escaneia em passos de 10px de baixo para cima procurando área mais vazia
+      let bestBreakY = startY + maxHeight;
+      let minContent = Infinity;
+      
+      // Amostragem rápida: analisa a cada 10 pixels
+      for (let scanY = scanStart; scanY >= startY + maxHeight * 0.85; scanY -= 10) {
+        try {
+          // Amostra uma pequena linha (5px de altura) para detectar conteúdo
+          const sampleCanvas = document.createElement('canvas');
+          sampleCanvas.width = Math.min(100, canvas.width); // Amostra apenas 100px de largura (centro)
+          sampleCanvas.height = 5;
+          const sampleCtx = sampleCanvas.getContext('2d');
+          
+          if (sampleCtx) {
+            const sampleX = Math.floor((canvas.width - sampleCanvas.width) / 2);
+            sampleCtx.drawImage(
+              canvas, 
+              sampleX, scanY, sampleCanvas.width, 5,
+              0, 0, sampleCanvas.width, 5
+            );
+            const imageData = sampleCtx.getImageData(0, 0, sampleCanvas.width, 5);
+            const pixels = imageData.data;
+            
+            // Conta pixels não-pretos (conteúdo visível)
+            let contentCount = 0;
+            for (let i = 0; i < pixels.length; i += 4) {
+              const r = pixels[i];
+              const g = pixels[i + 1];
+              const b = pixels[i + 2];
+              if (r > 15 || g > 15 || b > 15) {
+                contentCount++;
+              }
+            }
+            
+            // Se encontrou uma linha com menos conteúdo, atualiza o ponto de quebra
+            if (contentCount < minContent) {
+              minContent = contentCount;
+              bestBreakY = scanY;
+            }
+          }
+        } catch (e) {
+          // Ignora erros na amostragem
+          continue;
+        }
+      }
+      
+      // Retorna o ponto de quebra ajustado (mas nunca menor que 85% da altura máxima)
+      return Math.max(startY + maxHeight * 0.85, bestBreakY);
+    };
+    
+    // Divide o canvas em páginas com detecção inteligente de quebra
     while (sourceY < canvasHeight) {
       if (sourceY > 0) {
         pdf.addPage();
@@ -128,10 +194,21 @@ export const generatePDF = async (elementId: string, filename: string): Promise<
       }
       
       const remaining = canvasHeight - sourceY;
-      // Usa altura segura para evitar cortes
-      const safeHeight = Math.min(safePageHeightPx, remaining);
-      // Arredonda para baixo para evitar cortes parciais de elementos
-      const pageHeight = Math.floor(safeHeight);
+      // Calcula altura máxima para esta página
+      const maxHeight = Math.min(safePageHeightPx, remaining);
+      
+      // Se não é a última página e temos espaço, procura ponto de quebra seguro
+      let pageHeight: number;
+      if (remaining > safePageHeightPx * 1.1) {
+        // Procura um ponto de quebra melhor em espaço vazio
+        const safeBreak = findSafeBreakPoint(sourceY, maxHeight);
+        pageHeight = Math.floor(safeBreak - sourceY);
+        // Garante que não fique muito pequeno
+        pageHeight = Math.max(pageHeight, maxHeight * 0.85);
+      } else {
+        // Última página ou pouco conteúdo restante
+        pageHeight = Math.floor(remaining);
+      }
       
       // Cria canvas temporário para esta página
       const pageCanvas = document.createElement('canvas');

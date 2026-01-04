@@ -683,9 +683,9 @@ const LandbookView: React.FC<Props> = ({ data, content }) => {
             textAlign: 'center',
             wordBreak: 'break-word'
           }}>
-            Sua estratégia está mapeada. O próximo nível de faturamento exige a precisão técnica que você tem em mãos.
+            Sua estratégia está mapeada. O próximo nível de faturamento exige a precisão técnica que você tem em mãos. Você acaba de ganhar uma sessão estratégica gratuita.
           </p>
-          <div className="no-print" style={{ textAlign: 'center', width: '100%' }}>
+          <div className="no-print" style={{ textAlign: 'center', width: '100%', marginBottom: '24px' }}>
             <a
               href="https://linkareu.com/l/YJUgLb"
               target="_blank"
@@ -704,8 +704,24 @@ const LandbookView: React.FC<Props> = ({ data, content }) => {
                 margin: '0 auto'
               }}
             >
-              AGENDAR IMPLEMENTAÇÃO
+              Agendar sessão estratégica
             </a>
+          </div>
+          {/* Versão para PDF (sem no-print) - aparece apenas no PDF quando o .no-print é removido */}
+          <div className="pdf-only-button" style={{ 
+            textAlign: 'center', 
+            width: '100%',
+            marginTop: '24px',
+            padding: '24px 64px',
+            backgroundColor: '#c6fe1f',
+            borderRadius: '16px',
+            display: 'none',
+            color: '#000000',
+            fontWeight: '900',
+            fontSize: '0.875rem',
+            textTransform: 'uppercase'
+          }}>
+            Agendar sessão estratégica
           </div>
         </motion.div>
 

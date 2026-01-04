@@ -91,6 +91,29 @@
             word-break: break-word;
             overflow-wrap: break-word;
             hyphens: auto;
+            orphans: 3;
+            widows: 3;
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+        
+        /* Evita que parágrafos sejam cortados no meio */
+        #resultado-completo p {
+            page-break-inside: avoid;
+            break-inside: avoid;
+            margin-bottom: 1rem;
+        }
+        
+        /* Evita que listas sejam cortadas */
+        #resultado-completo li {
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+        
+        /* Garante que cards não sejam cortados */
+        #resultado-completo [class*="bg-"] {
+            page-break-inside: avoid;
+            break-inside: avoid;
         }
         
         #landbook-pdf-content {
